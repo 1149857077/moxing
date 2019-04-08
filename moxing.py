@@ -71,10 +71,10 @@ def down(photourl, zp, folderName):
                   f.write(str(e))
 
 
-def downHtml(response):
+def downHtml(response, folderName):
     response.encoding = 'utf8'
     print('开始下载网页'.center(58, '-'))
-    with open('D:\Downloads\预览图\index.html', 'wb') as f:
+    with open('D:\Downloads\预览图\{}.html'.format(folderName), 'wb') as f:
         f.write(response.content)
 
 
@@ -99,7 +99,7 @@ def upload_Bdyun(folderName):
       bp.upload(localpath=folderName +'.rar', remotepath=folderName, ondup='newcopy')  # 将本地文件上传到百度云盘中
 
       print('开始上传网页'.center(58, '-'))
-      bp.upload(localpath='index.html', remotepath=folderName, ondup='newcopy')  # 将本地文件上传到百度云盘中
+      bp.upload(localpath='{}.html'.format(folderName), remotepath=folderName, ondup='newcopy')  # 将本地文件上传到百度云盘中
 
       print('上传完毕！'.center(58,'-'))
 
@@ -110,7 +110,6 @@ def main():
             check_url(url)
             start = time.time()
             response = requtest_header(url)
-            downHtml(response)  # 下载单页, 以方便观看
             if response:
                   global photos
                   photos = re.findall(' zoomfile="(.*?)" ',response.text)  #图片url
@@ -121,6 +120,7 @@ def main():
                         folderName = folderName.replace(ch,' ⁂ ')  #去除特殊字符
                   # 改变当前工作目录
                   os.chdir('D:\Downloads\预览图')
+                  downHtml(response, folderName)  # 下载单页, 以方便观看
                   #创建保存文件夹
                   if folderName not in os.listdir():
                         os.mkdir(folderName)
