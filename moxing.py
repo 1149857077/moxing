@@ -2,26 +2,27 @@ import requests
 import re
 import os
 import time
-import warnings  #捕捉警告
+import warnings  # 捕捉警告
 import threading
 from fake_useragent import UserAgent
 import hashlib
-##压缩文件
-from zipfile import ZipFile
+from zipfile import ZipFile  # 压缩文件
+from bypy import ByPy  # 上传百度云
 
-from bypy import ByPy
 
 glock = threading.Lock()
 ua = UserAgent()
 photos = list()
 
+
 def check_url(url):
       check_rule = re.compile('https?://www.*')
       if check_rule.search(url):
-            print('开始运行'.center(76,'-'))
+            print('开始运行'.center(76, '-'))
       else:
-            print('内容不符合'.center(74,'-'))
+            print('内容不符合'.center(74, '-'))
             exit()
+
 
 def requtest_header(url):
       header = {
@@ -30,7 +31,7 @@ def requtest_header(url):
       count = 0
       while count < 3:
             try:
-                  return requests.get(url=url, headers=header,timeout = 5)
+                  return requests.get(url=url, headers=header, timeout=5)
             except requests.exceptions.RequestException as e:
                   print('超时,正在重试......')
                   count += 1
@@ -38,7 +39,8 @@ def requtest_header(url):
             print('这个链接已被抛弃.......')
             return None
 
-def get_photo(zp,folderName):
+
+def get_photo(zp, folderName):
       global photos
       while photos:
             photourl = None
@@ -49,7 +51,8 @@ def get_photo(zp,folderName):
             glock.release()
             if photourl:down(photourl,zp,folderName)
 
-def down(photourl,zp,folderName):
+
+def down(photourl, zp, folderName):
       hs = hashlib.sha1()
       hs.update(photourl.encode())
       fileName = hs.hexdigest()+'.jpg'
@@ -66,7 +69,15 @@ def down(photourl,zp,folderName):
       except Exception as e:
             with open('异常记录.txt','a') as f:
                   f.write(str(e))
-                  
+
+
+def downHtml(response):
+    response.encoding = 'utf8'
+    print('开始下载网页'.center(58, '-'))
+    with open('D:\Downloads\预览图\index.html', 'wb') as f:
+        f.write(response.content)
+
+
 def clock(func):
       def w(*args,**kwargs):
             start = time.time()
@@ -75,8 +86,8 @@ def clock(func):
             print('下载完成,耗时:{t}S'.center(58, '-').format(t=end - start))
       return w
 
-def upload_Bdyun(folderName):
 
+def upload_Bdyun(folderName):
       bp = ByPy()
       print('正在创建存储文件夹'.center(58,'-'))
       bp.mkdir(remotepath=folderName)  # 在网盘中新建目录
@@ -87,6 +98,9 @@ def upload_Bdyun(folderName):
       print('开始上传压缩包'.center(58, '-')) 
       bp.upload(localpath=folderName +'.rar', remotepath=folderName, ondup='newcopy')  # 将本地文件上传到百度云盘中
 
+      print('开始上传网页'.center(58, '-'))
+      bp.upload(localpath='index.html', remotepath=folderName, ondup='newcopy')  # 将本地文件上传到百度云盘中
+
       print('上传完毕！'.center(58,'-'))
 
 
@@ -96,6 +110,7 @@ def main():
             check_url(url)
             start = time.time()
             response = requtest_header(url)
+            downHtml(response)  # 下载单页, 以方便观看
             if response:
                   global photos
                   photos = re.findall(' zoomfile="(.*?)" ',response.text)  #图片url
