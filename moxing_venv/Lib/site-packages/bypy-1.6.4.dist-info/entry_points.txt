@@ -1,0 +1,6 @@
+[console_scripts]
+bypy = bypy.bypy:main
+
+[gui_scripts]
+bypygui = bypy.gui:main
+
