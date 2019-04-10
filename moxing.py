@@ -26,7 +26,7 @@ def login():
     response = requests.post(
         url='https://www.moxing.fyi/member.php?mod=logging&action=login&loginsubmit=yes&handlekey=login&loginhash=LEBYu&inajax=1',
         data=data)
-    print(response.text)
+    # print(response.text)
 
 
 def check_url(url):
@@ -124,6 +124,7 @@ def upload_Bdyun(folderName):
 
 def main():
       while True:
+            login()
             url = input('>>>:')
             check_url(url)
             start = time.time()
