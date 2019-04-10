@@ -1,11 +1,13 @@
 # README
 *****
-[![py35,py36](https://img.shields.io/pypi/pyversions/wechatsogou.svg)](https://github.com/Amd794)
+[![py35,py36](https://img.shields.io/badge/Python-3.5|3.6,3|7-green.svg)](https://github.com/Amd794)
 
+## Features
+- [x] 登录维持, 保证资源允许下载
+- [x] 下载资源
+- [x] 仿站
+- [x] 文件自动压缩上传
+- [ ] 植入代理池支持
 # 演示
 ![](./moxingv1_1.gif)
-## 主要功能
-* 特定类型论坛资源爬取
-  * 爬取帖子里的图片,文件资源
-* 文件上传
-  * 下载完成后自动压缩上传百度云盘
+
