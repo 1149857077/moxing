@@ -8,6 +8,6 @@
 - [x] 仿站
 - [x] 文件自动压缩上传
 - [ ] 植入代理池支持
-# 演示
+# Demonstration
 ![](./moxingv1_1.gif)
 
