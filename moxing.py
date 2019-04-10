@@ -9,10 +9,24 @@ import hashlib
 from zipfile import ZipFile  # 压缩文件
 from bypy import ByPy  # 上传百度云
 
-
+requests = requests.Session()  # 维持会话登录状态, 让Session函数自动管理cookies
 glock = threading.Lock()
 ua = UserAgent()
 photos = list()
+
+
+def login():
+    data = {
+        'referer ': 'https: // www.moxing.fyi',
+        'username': 'Amd794',
+        'password': '6be15037369879e9cf4fa9c338e497e4',
+        'questionid': '0',
+        'answer': ''
+    }
+    response = requests.post(
+        url='https://www.moxing.fyi/member.php?mod=logging&action=login&loginsubmit=yes&handlekey=login&loginhash=LEBYu&inajax=1',
+        data=data)
+    print(response.text)
 
 
 def check_url(url):

@@ -7,11 +7,25 @@
 import requests
 from fake_useragent import UserAgent
 ua = UserAgent()
+requests = requests.Session()
 
+
+def login():
+    data = {
+        'referer ': 'https: // www.moxing.fyi',
+        'username': 'Amd794',
+        'password': '6be15037369879e9cf4fa9c338e497e4',
+        'questionid': '0',
+        'answer': ''
+    }
+    response = requests.post(
+        url='https://www.moxing.fyi/member.php?mod=logging&action=login&loginsubmit=yes&handlekey=login&loginhash=LEBYu&inajax=1',
+        data=data)
+    print(response.text)
 
 def downHtml(response):
     response.encoding = 'utf8'
-    with open('index.html', 'wb') as f:
+    with open('test.html', 'wb') as f:
         f.write(response.content)
 
 
@@ -32,5 +46,6 @@ def requtest_header(url):
 
 
 if __name__ == '__main__':
+    login()
     response = requtest_header(input('>>>:'))
     downHtml(response)
