@@ -52,10 +52,12 @@ def get_photo(zp, folderName):
             if photourl:down(photourl,zp,folderName)
 
 
+# 下载图片
 def down(photourl, zp, folderName):
       hs = hashlib.sha1()
-      hs.update(photourl.encode())
-      fileName = hs.hexdigest()+'.jpg'
+      hs.update(photourl.encode())     
+      filename,extension = os.path.splitext(photourl)  # 分离文件名和后缀
+      fileName = hs.hexdigest()+extension  # 重新构建文件
       r = requests.get(url=photourl).content
       with open('./'+folderName+os.sep+fileName,'wb') as f:
             f.write(r)
@@ -71,6 +73,7 @@ def down(photourl, zp, folderName):
                   f.write(str(e))
 
 
+# 下载网页
 def downHtml(response, folderName):
     response.encoding = 'utf8'
     print('开始下载网页'.center(58, '-'))
@@ -87,6 +90,7 @@ def clock(func):
       return w
 
 
+# 上传资源
 def upload_Bdyun(folderName):
       bp = ByPy()
       print('正在创建存储文件夹'.center(58,'-'))
