@@ -27,7 +27,10 @@ def login():
         url='https://www.moxing.fyi/member.php?mod=logging&action=' +
             'login&loginsubmit=yes&handlekey=login&loginhash=LEBYu&inajax=1',
         data=data)
-    print(response.text)
+    if '欢迎' in response.text:
+        print('登录成功'.center(76, '-'))
+    else:
+        print('登录失败')
 
 
 def check_url(url):
@@ -35,7 +38,7 @@ def check_url(url):
     if check_rule.search(url):
         print('开始运行'.center(76, '-'))
     else:
-        print('内容不符合'.center(74, '-'))
+        print('内容不符合'.center(76, '-'))
         exit()
 
 
@@ -82,7 +85,7 @@ def down(photourl, zp, folderName):
         warnings.filterwarnings('error')  # 将警告转换为异常,ignore忽略警告
         zp.write('./'+folderName+os.sep+fileName)
     except UserWarning:
-        print('文件{0}已经压缩过'.format(folderName).center(58, '-'))
+        print('文件{0}已经压缩过'.format(photourl).center(76, '-'))
     except ValueError:
         print('ValueError错误')
     except Exception as e:
@@ -93,7 +96,7 @@ def down(photourl, zp, folderName):
 # 下载网页
 def downHtml(response, folderName):
     response.encoding = 'utf8'
-    print('开始下载网页'.center(58, '-'))
+    print('开始下载网页'.center(74, '-'))
     with open('D:\\Downloads\\预览图\\{}.html'.format(folderName), 'wb') as f:
         f.write(response.content)
 
@@ -103,36 +106,38 @@ def clock(func):
         start = time.time()
         func()
         end = time.time()
-        print('下载完成,耗时:{t}S'.center(58, '-').format(t=end - start))
+        print('下载完成,耗时:{t}S'.center(76, '-').format(t=end - start))
     return w
 
 
 # 上传资源
 def upload_Bdyun(folderName):
     bp = ByPy()
-    print('正在创建存储文件夹'.center(58, '-'))
+    print('正在创建存储文件夹'.center(74, '-'))
     bp.mkdir(remotepath=folderName)  # 在网盘中新建目录
 
-    print('开始上传图片'.center(58, '-'))
+    print('开始上传图片'.center(76, '-'))
     bp.upload(localpath=folderName, remotepath=folderName,
               ondup='newcopy')  # 将本地文件上传到百度云盘中
 
-    print('开始上传压缩包'.center(58, '-'))
+    print('开始上传压缩包'.center(76, '-'))
     bp.upload(localpath=folderName + '.rar',
               remotepath=folderName, ondup='newcopy')  # 将本地文件上传到百度云盘中
 
-    print('开始上传网页'.center(58, '-'))
+    print('开始上传网页'.center(76, '-'))
     bp.upload(localpath='{}.html'.format(folderName), remotepath=folderName,
               ondup='newcopy')  # 将本地文件上传到百度云盘中
 
-    print('上传完毕！'.center(58, '-'))
+    print('上传完毕！'.center(76, '-'))
 
 
 def main():
+    if 'Downloads' not in os.listdir('D:\\'):
+        os.mkdir('D:\\Downloads\\预览图')
+    login()
     while True:
-        login()
         url = input('>>>:')
-        check_url(url)
+        check_url(url)  # 检查url是否正确
         start = time.time()
         response = requtest_header(url)
         if response:
@@ -165,7 +170,7 @@ def main():
             # 上传百度云
             upload_Bdyun(folderName)
             end = time.time()
-            print('操作完成,耗时:{t}S'.center(58, '-').format(t=end - start))
+            print('操作完成,耗时:{t}S'.center(68, '-').format(t=end - start))
         else:
             # photos = list()
             print('当前网络不可用')
