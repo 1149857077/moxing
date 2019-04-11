@@ -37,9 +37,10 @@ def check_url(url):
     check_rule = re.compile('https?://www.*')
     if check_rule.search(url):
         print('开始运行'.center(76, '-'))
+        return None
     else:
         print('内容不符合'.center(76, '-'))
-        exit()
+        return True
 
 
 def requtest_header(url):
@@ -137,7 +138,8 @@ def main():
     login()
     while True:
         url = input('>>>:')
-        check_url(url)  # 检查url是否正确
+        if check_url(url):  # 检查url是否正确
+            continue
         start = time.time()
         response = requtest_header(url)
         if response:
