@@ -8,15 +8,15 @@
 - [x] 仿站
 - [x] 文件自动压缩上传
 - [ ] 加入代理池支持
-- [ ] 全站资源爬取入库
 - [ ] 论坛资源更新邮箱推送
-- [ ] 同时支持协程, 最大限度优化爬取速度
+- [ ] 破解加密算法, 最大限度优化爬取速度
 
 # 预览
 ![](./mx.jpg)
 ![](./moxingv1_1.gif)
 
 # 使用
++ python包的安装. pip install -r requirements.txt
 + 第一次运行时需要授权，你需要在命令行下跑一下bypy info(或其它bypy)命令, 然后跟着说明（登陆等）来授权即可。授权只需一次，一旦成功，以后不会再出现授权提示
   + 注意:想要支持中文，你要把系统的区域编码设置为UTF-8。（参见：http://perlgeek.de/en/article/set-up-a-clean-utf8-environment)
   
