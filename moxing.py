@@ -8,6 +8,7 @@ from fake_useragent import UserAgent
 import hashlib
 from zipfile import ZipFile  # 压缩文件
 from bypy import ByPy  # 上传百度云
+from pyquery import PyQuery  # 使用css选择器
 
 requests = requests.Session()  # 维持会话登录状态, 让Session函数自动管理cookies
 glock = threading.Lock()
@@ -97,7 +98,7 @@ def down(photourl, zp, folderName):
 # 下载网页
 def downHtml(response, folderName):
     response.encoding = 'utf8'
-    print('开始下载网页'.center(74, '-'))
+    print('仿站完成'.center(74, '-'))
     with open('D:\\Downloads\\预览图\\{}.html'.format(folderName), 'wb') as f:
         f.write(response.content)
 
@@ -132,37 +133,71 @@ def upload_Bdyun(folderName):
     print('上传完毕！'.center(76, '-'))
 
 
-def main():
+# 解析网页, 提取数据
+def analysisPage(response):
+    if response.status_code:
+        global photos
+        photos = re.findall(' zoomfile="(.*?)" ', response.text)  # 图片url
+        folderName = PyQuery(response.text)("span#thread_subject").text()  # 标题
+        for ch in r'\/:|<>?*"':
+            folderName = folderName.replace(ch, ' ⁂ ')  # 去除特殊字符
+        formhash = PyQuery(response.text)("input[name='formhash']").attr('value')
+        urlPay = PyQuery(response.text)("ignore_js_op .tattl dd .attnm a").attr('href')
+        aid, tid = re.findall(r'(\d+)', urlPay)
+        downHtml(response, folderName)  # 下载单页, 以方便观看
+        return {
+            'folderName': folderName,
+            'formhash': formhash,
+            'aid': aid,
+            'tid': tid
+        }
+    print('当前网络不可用')
+    return None
+
+
+# 获取付费资源
+def attachpay(formhash, aid, tid):
+    data = {
+        'formhash': formhash,  # 关键参数, 为了服务端的session能识别, 返回正确的下载路径
+        'referer': 'https://www.moxing.fyi',  # 重定向, 写不写没影响
+        'aid': aid,  # 附件对应的aid
+        'buyall': 'yes'  # 获取所有附件
+    }
+    response = requests.post(
+        url='https://www.moxing.fyi/forum.php?mod=misc&action=attachpay' +
+            '&tid={tid}&paysubmit=yes&infloat=yes&inajax=1'.format(tid=tid),
+        data=data)
+    print(response.text)
+
+
+# 创建本地保存文件夹
+def mkdir(content):
     if 'Downloads' not in os.listdir('D:\\'):
         os.mkdir('D:\\Downloads\\预览图')
+    # 改变当前工作目录
+    os.chdir('D:\\Downloads\\预览图')
+    # 创建保存文件夹
+    if content['folderName'] not in os.listdir():
+        os.mkdir(content['folderName'])
+
+
+def main():
     login()
     while True:
-        url = input('>>>:')
+        url = input('>>>:').strip()
         if check_url(url):  # 检查url是否正确
             continue
         start = time.time()
         response = requtest_header(url)
-        if response:
-            global photos
-            photos = re.findall(' zoomfile="(.*?)" ', response.text)  # 图片url
-
-            folderName = re.findall('<span id="thread_subject">(.*?)</span>',
-                                    response.text)[0]  # 标题
-            # folderName = input('文件夹名字:')
-            for ch in r'\/:|<>?*"':
-                folderName = folderName.replace(ch, ' ⁂ ')  # 去除特殊字符
-            # 改变当前工作目录
-            os.chdir('D:\\Downloads\\预览图')
-            downHtml(response, folderName)  # 下载单页, 以方便观看
-            # 创建保存文件夹
-            if folderName not in os.listdir():
-                os.mkdir(folderName)
-            # 创建压缩文件指针
-            zp = ZipFile(folderName+'.rar', 'a')
-
+        content = analysisPage(response)
+        if content:
+            mkdir(content)  # 创建本地保存文件夹
+            attachpay(content['formhash'], content['aid'], content['tid'])
+            zp = ZipFile(content['folderName']+'.rar', 'a')  # 创建压缩文件指针
             Threads = list()
             for i in range(8):
-                t = threading.Thread(target=get_photo, args=(zp, folderName, ))
+                t = threading.Thread(target=get_photo,
+                                     args=(zp, content['folderName'], ))
                 t.start()
                 Threads.append(t)
             for t in Threads:
@@ -170,12 +205,11 @@ def main():
             # 释放压缩文件指针
             zp.close()
             # 上传百度云
-            upload_Bdyun(folderName)
+            upload_Bdyun(content['folderName'])
             end = time.time()
             print('操作完成,耗时:{t}S'.center(68, '-').format(t=end - start))
         else:
-            # photos = list()
-            print('当前网络不可用')
+            print('找不到任何数据')
 
 
 if __name__ == '__main__':
