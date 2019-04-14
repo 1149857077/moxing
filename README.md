@@ -51,8 +51,8 @@ def attachpay(formhash, aid, tid):
         data=data)
     print(response.text)
 ```
-
-### 日志
+*****
+# 日志
 + 2019/4/14
   + 更新付费资源的自动解析读取, 让操作更便捷
 
