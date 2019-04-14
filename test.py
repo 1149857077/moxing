@@ -10,6 +10,8 @@ from pyquery import PyQuery
 from fake_useragent import UserAgent
 ua = UserAgent()
 requests = requests.Session()
+from zipfile import ZipFile
+import zipfile
 
 
 def login():
@@ -74,7 +76,7 @@ def analysisPage(response):
         formhash = PyQuery(response.text)("input[name='formhash']").attr('value')
         print(folderName)
         print(formhash)
-        urlPay = PyQuery(response.text)("ignore_js_op .tattl dd .attnm a").attr('href')
+        urlPay = PyQuery(response.text)("td[class='t_f'] ignore_js_op span a").attr('href')
         # print(urlPay,type(urlPay))
         aid, tid =re.findall(r'(\d+)', urlPay)
         downHtml(response, folderName)  # 下载单页, 以方便观看
@@ -89,10 +91,28 @@ def analysisPage(response):
 
 
 if __name__ == '__main__':
-    login()
-    url = input(">>>:").strip()
-    response = requtest_header(url)
-    print(analysisPage(response))
-
-    # with open('test.html', 'wb') as f:
+    with open('test.txt',encoding='utf8') as f:
+        print('https://www.moxing.fyi/'+ re.search("succeedhandle_\('(.*?)'", f.read()).group(1))
+    # login()
+    # url = input(">>>:").strip()
+    # # url = 'https://www.moxing.fyi/forum.php?mod=attachment&aid=NjAwMDA0fDdkNmM4NTQ5fDE1NTUxMzA1NTB8OTY0MTl8OTA5MDc%3D'
+    # response = requtest_header(url)
+    # # print(analysisPage(response))
+    # with open('test.zip', 'wb') as f:
     #     f.write(response.content)
+    # with ZipFile('test.zip', 'r') as zp:
+    #     zp.extractall(pwd=b'moxing')
+    #     print("%-46s %19s %12s" % ("File Name", "Modified    ", "Size"),
+    #           file=None)
+    #     for zinfo in zp.filelist:
+    #         date = "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time[:6]
+    #         print("%-46s %s %12d" % (zinfo.filename, date, zinfo.file_size),
+    #               file=None)
+    #         if '.txt' in zinfo.filename:
+    #             filename = zinfo.filename
+    # try:
+    #     with open(filename,encoding='utf-8') as fr:
+    #         print(fr.read())
+    # except UnicodeDecodeError:
+    #     with open(filename,encoding='gbk') as fr:
+    #         print(fr.read())
