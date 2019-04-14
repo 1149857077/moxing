@@ -3,10 +3,10 @@
 [![py35,py36](https://img.shields.io/badge/Python-3.5|3.6,3|7-green.svg)](https://github.com/Amd794)
 
 # 特点
-- [x] 登录维持, 保证资源允许下载
-- [x] 下载资源
-- [x] 仿站
-- [x] 文件自动压缩上传
+- [x] 登录维持, 保证资源稳定下载
+- [x] 一键保存资源
+- [x] 仿站保存
+- [x] 资源自动压缩上传
 - [ ] 加入代理池支持
 - [ ] 论坛资源更新邮箱推送
 - [ ] 破解加密算法, 最大限度优化爬取速度
@@ -33,5 +33,22 @@ bp.upload(localpath=folderName, remotepath=folderName,
 zp = ZipFile(folderName+'.rar', 'a')
 warnings.filterwarnings('error')  # 将警告转换为异常,ignore忽略警告
 zp.write('./'+folderName+os.sep+fileName)
+```
+
+### 付费
+```python
+# 获取付费资源
+def attachpay(formhash, aid, tid):
+    data = {
+        'formhash': formhash,  # 关键参数, 为了服务端的session能识别, 返回正确的下载路径
+        'referer': 'https://www.moxing.fyi',  # 重定向, 写不写没影响
+        'aid': aid,  # 附件对应的aid
+        'buyall': 'yes'  # 获取所有附件
+    }
+    response = requests.post(
+        url='https://www.moxing.fyi/forum.php?mod=misc&action=attachpay' +
+            '&tid={tid}&paysubmit=yes&infloat=yes&inajax=1'.format(tid=tid),
+        data=data)
+    print(response.text)
 ```
 
