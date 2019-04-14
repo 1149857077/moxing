@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# Time    : 2019/4/8 13:18
+# Author  : Amd794
+# Email   : 2952277346@qq.com
+# Github  : https://github.com/Amd794
+
+
 import requests
 import re
 import os
@@ -16,6 +23,22 @@ ua = UserAgent()
 photos = list()
 
 
+# TODO 统计时间, 日志记录
+def time_logger(flag=False):
+    def show_time(func):
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            print('spend %s' % (end_time - start_time))
+            if flag:  # 判断是否需要写入日志模块
+                print('将这个操作的时间记录到日志中')
+            return result
+        return wrapper
+    return show_time
+
+
+# TODO 登录
 def login():
     data = {
         'referer ': 'https: // www.moxing.fyi',
@@ -34,6 +57,7 @@ def login():
         print('登录失败')
 
 
+# TODO url检查
 def check_url(url):
     check_rule = re.compile('https?://www.*')
     if check_rule.search(url):
@@ -44,6 +68,7 @@ def check_url(url):
         return True
 
 
+# TODO 请求头
 def requtest_header(url):
     header = {
         'User-Agent': ua.random
@@ -60,6 +85,7 @@ def requtest_header(url):
         return None
 
 
+# TODO 获取图片链接
 def get_photo(zp, folderName):
     global photos
     while photos:
@@ -67,14 +93,14 @@ def get_photo(zp, folderName):
         glock.acquire()
         if photos:
             photourl = photos.pop()
-            print(threading.current_thread().name,
-                  photourl, sep='：', end='\n\n')
+            # print(threading.current_thread().name,
+            #       photourl, sep='：', end='\n\n')  # 打印正在下载的图片
         glock.release()
         if photourl:
             down(photourl, zp, folderName)
 
 
-# 下载图片
+# TODO 下载预览图片, 并同时压缩备份, 防止和谐
 def down(photourl, zp, folderName):
     hs = hashlib.sha1()
     hs.update(photourl.encode())
@@ -95,7 +121,7 @@ def down(photourl, zp, folderName):
             f.write(str(e))
 
 
-# 下载网页
+# TODO 仿站
 def downHtml(response, folderName):
     response.encoding = 'utf8'
     print('仿站完成'.center(74, '-'))
@@ -103,16 +129,7 @@ def downHtml(response, folderName):
         f.write(response.content)
 
 
-def clock(func):
-    def w(*args, **kwargs):
-        start = time.time()
-        func()
-        end = time.time()
-        print('下载完成,耗时:{t}S'.center(76, '-').format(t=end - start))
-    return w
-
-
-# 上传资源
+# TODO 上传资源
 def upload_Bdyun(folderName):
     bp = ByPy()
     print('正在创建存储文件夹'.center(74, '-'))
@@ -133,7 +150,7 @@ def upload_Bdyun(folderName):
     print('上传完毕！'.center(76, '-'))
 
 
-# 解析网页, 提取数据
+# TODO 解析网页, 提取数据
 def analysisPage(response):
     if response.status_code:
         global photos
@@ -141,10 +158,22 @@ def analysisPage(response):
         folderName = PyQuery(response.text)("span#thread_subject").text()  # 标题
         for ch in r'\/:|<>?*"':
             folderName = folderName.replace(ch, ' ⁂ ')  # 去除特殊字符
-        formhash = PyQuery(response.text)("input[name='formhash']").attr('value')
-        urlPay = PyQuery(response.text)("ignore_js_op .tattl dd .attnm a").attr('href')
-        aid, tid = re.findall(r'(\d+)', urlPay)
         downHtml(response, folderName)  # 下载单页, 以方便观看
+        text = PyQuery(response.text)
+        # print(text)
+        formhash = text("input[name='formhash']").attr('value')
+        # print(formhash)
+        try:
+            urlPay = text("td[class='t_f'] ignore_js_op span a").attr('href')
+            # print(urlPay)
+            aid, tid = re.findall(r'(\d+)', urlPay)
+        except TypeError:
+            urlPay = text("ignore_js_op .attnm a").attr('href')
+            # print(urlPay)
+            aid, tid = re.findall(r'(\d+)', urlPay)
+        except ValueError:
+            print('该资源已经解析过了'.center(72, '-'))
+            aid, tid = None, None
         return {
             'folderName': folderName,
             'formhash': formhash,
@@ -155,7 +184,7 @@ def analysisPage(response):
     return None
 
 
-# 获取付费资源
+# TODO 获取付费资源
 def attachpay(formhash, aid, tid):
     data = {
         'formhash': formhash,  # 关键参数, 为了服务端的session能识别, 返回正确的下载路径
@@ -167,13 +196,36 @@ def attachpay(formhash, aid, tid):
         url='https://www.moxing.fyi/forum.php?mod=misc&action=attachpay' +
             '&tid={tid}&paysubmit=yes&infloat=yes&inajax=1'.format(tid=tid),
         data=data)
-    print(response.text)
+    print('付费资源解析完成: https://www.moxing.fyi/'+
+          re.search("succeedhandle_\('(.*?)'", response.text).group(1))
+    return response.text
 
 
-# 创建本地保存文件夹
+# TODO 下载分析付费资源 ,每个帖子规范不一,很难统一处理
+def zippay(downurl, folderName):
+    response = requtest_header(downurl)
+    with open('[附件]' + folderName, 'wb') as f:
+        f.write(response.content)
+    with ZipFile('[附件]' + folderName, 'r') as zp:
+        zp.extractall(pwd=b'moxing')
+        print("%-46s %19s %12s" % ("File Name", "Modified    ", "Size"),
+              file=None)
+        for zinfo in zp.filelist:
+            date = "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time[:6]
+            print("%-46s %s %12d" % (zinfo.filename, date, zinfo.file_size),
+                  file=None)
+            if '.txt' in zinfo.filename:
+                filename = zinfo.filename
+    try:
+        with open(filename, encoding='utf-8') as fr:
+            print(fr.read())
+    except UnicodeDecodeError:
+        with open(filename, encoding='gbk') as fr:
+            print(fr.read())
+
+
+# TODO 创建本地保存文件夹
 def mkdir(content):
-    if 'Downloads' not in os.listdir('D:\\'):
-        os.mkdir('D:\\Downloads\\预览图')
     # 改变当前工作目录
     os.chdir('D:\\Downloads\\预览图')
     # 创建保存文件夹
@@ -181,18 +233,28 @@ def mkdir(content):
         os.mkdir(content['folderName'])
 
 
+# TODO 程序入口
 def main():
     login()
+    if '预览图' not in os.listdir('D:\\Downloads'):
+        os.mkdir('D:\\Downloads\\预览图')
     while True:
         url = input('>>>:').strip()
         if check_url(url):  # 检查url是否正确
             continue
         start = time.time()
         response = requtest_header(url)
+##        print(response.text)
         content = analysisPage(response)
         if content:
             mkdir(content)  # 创建本地保存文件夹
-            attachpay(content['formhash'], content['aid'], content['tid'])
+            if content['aid']:
+                jsonText = attachpay(content['formhash'],
+                                     content['aid'],
+                                     content['tid'])  # 付费
+                downurl = 'https://www.moxing.fyi/' + \
+                          re.search("succeedhandle_\('(.*?)'",
+                                    jsonText).group(1)  # 提取付费下载链接
             zp = ZipFile(content['folderName']+'.rar', 'a')  # 创建压缩文件指针
             Threads = list()
             for i in range(8):
@@ -204,6 +266,8 @@ def main():
                 t.join()
             # 释放压缩文件指针
             zp.close()
+            # 读取资源文本
+            # zippay(downurl, content['folderName']+'.rar')
             # 上传百度云
             upload_Bdyun(content['folderName'])
             end = time.time()
