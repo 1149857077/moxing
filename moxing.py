@@ -13,7 +13,7 @@ import warnings  # 捕捉警告
 import threading
 from fake_useragent import UserAgent
 import hashlib
-from zipfile import ZipFile  # 压缩文件
+from zipfile import ZipFile, BadZipFile  # 压缩文件
 from bypy import ByPy  # 上传百度云
 from pyquery import PyQuery  # 使用css选择器
 
@@ -34,27 +34,30 @@ def time_logger(flag=False):
             if flag:  # 判断是否需要写入日志模块
                 print('将这个操作的时间记录到日志中')
             return result
+
         return wrapper
+
     return show_time
 
 
 # TODO 登录
 def login():
     data = {
-        'referer ': 'https: // www.moxing.fyi',
+        'referer ': 'https://www.moxing.world',
         'username': 'Amd794',
         'password': '6be15037369879e9cf4fa9c338e497e4',
         'questionid': '0',
         'answer': ''
     }
     response = requests.post(
-        url='https://www.moxing.fyi/member.php?mod=logging&action=' +
+        url='https://www.moxing.world/member.php?mod=logging&action=' +
             'login&loginsubmit=yes&handlekey=login&loginhash=LEBYu&inajax=1',
         data=data)
     if '欢迎' in response.text:
         print('登录成功'.center(76, '-'))
     else:
         print('登录失败')
+        print(response.text)
 
 
 # TODO url检查
@@ -105,13 +108,13 @@ def down(photourl, zp, folderName):
     hs = hashlib.sha1()
     hs.update(photourl.encode())
     filename, extension = os.path.splitext(photourl)  # 分离文件名和后缀
-    fileName = hs.hexdigest()+extension  # 重新构建文件
+    fileName = hs.hexdigest() + extension  # 重新构建文件
     r = requests.get(url=photourl).content
-    with open('./'+folderName+os.sep+fileName, 'wb') as f:
+    with open('./' + folderName + os.sep + fileName, 'wb') as f:
         f.write(r)
     try:
         warnings.filterwarnings('error')  # 将警告转换为异常,ignore忽略警告
-        zp.write('./'+folderName+os.sep+fileName)
+        zp.write('./' + folderName + os.sep + fileName)
     except UserWarning:
         print('文件{0}已经压缩过'.format(photourl).center(76, '-'))
     except ValueError:
@@ -149,6 +152,10 @@ def upload_Bdyun(folderName):
 
     print('上传完毕！'.center(76, '-'))
 
+    os.remove('[附件]' + folderName + '.rar')
+    os.remove(folderName + '.rar')
+    os.remove(folderName + '.html')
+
 
 # TODO 解析网页, 提取数据
 def analysisPage(response):
@@ -174,6 +181,8 @@ def analysisPage(response):
         except ValueError:
             print('该资源已经解析过了'.center(72, '-'))
             aid, tid = None, None
+        except Exception:
+            aid, tid = None, None
         return {
             'folderName': folderName,
             'formhash': formhash,
@@ -188,15 +197,15 @@ def analysisPage(response):
 def attachpay(formhash, aid, tid):
     data = {
         'formhash': formhash,  # 关键参数, 为了服务端的session能识别, 返回正确的下载路径
-        'referer': 'https://www.moxing.fyi',  # 重定向, 写不写没影响
+        'referer': 'https://www.moxing.world',  # 重定向, 写不写没影响
         'aid': aid,  # 附件对应的aid
         'buyall': 'yes'  # 获取所有附件
     }
     response = requests.post(
-        url='https://www.moxing.fyi/forum.php?mod=misc&action=attachpay' +
+        url='https://www.moxing.world/forum.php?mod=misc&action=attachpay' +
             '&tid={tid}&paysubmit=yes&infloat=yes&inajax=1'.format(tid=tid),
         data=data)
-    print('付费资源解析完成: https://www.moxing.fyi/'+
+    print('付费资源解析完成: https://www.moxing.world/' +
           re.search("succeedhandle_\('(.*?)'", response.text).group(1))
     return response.text
 
@@ -206,22 +215,27 @@ def zippay(downurl, folderName):
     response = requtest_header(downurl)
     with open('[附件]' + folderName, 'wb') as f:
         f.write(response.content)
-    with ZipFile('[附件]' + folderName, 'r') as zp:
-        zp.extractall(pwd=b'moxing')
-        print("%-46s %19s %12s" % ("File Name", "Modified    ", "Size"),
-              file=None)
-        for zinfo in zp.filelist:
-            date = "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time[:6]
-            print("%-46s %s %12d" % (zinfo.filename, date, zinfo.file_size),
+    try:
+        with ZipFile('[附件]' + folderName, 'r') as zp:
+            zp.extractall(pwd=b'moxing')
+            print("%-46s %19s %12s" % ("File Name", "Modified    ", "Size"),
                   file=None)
-            if '.txt' in zinfo.filename:
-                filename = zinfo.filename
+            for zinfo in zp.filelist:
+                date = "%d-%02d-%02d %02d:%02d:%02d" % zinfo.date_time[:6]
+                print("%-46s %s %12d" % (zinfo.filename, date, zinfo.file_size),
+                      file=None)
+                if '.txt' in zinfo.filename:
+                    filename = zinfo.filename
+    except BadZipFile:
+        print('bt文件')
     try:
         with open(filename, encoding='utf-8') as fr:
             print(fr.read())
     except UnicodeDecodeError:
         with open(filename, encoding='gbk') as fr:
             print(fr.read())
+    except UnboundLocalError:
+        print('bt文件')
 
 
 # TODO 创建本地保存文件夹
@@ -244,7 +258,7 @@ def main():
             continue
         start = time.time()
         response = requtest_header(url)
-##        print(response.text)
+        ##        print(response.text)
         content = analysisPage(response)
         if content:
             mkdir(content)  # 创建本地保存文件夹
@@ -252,14 +266,14 @@ def main():
                 jsonText = attachpay(content['formhash'],
                                      content['aid'],
                                      content['tid'])  # 付费
-                downurl = 'https://www.moxing.fyi/' + \
+                downurl = 'https://www.moxing.world/' + \
                           re.search("succeedhandle_\('(.*?)'",
                                     jsonText).group(1)  # 提取付费下载链接
-            zp = ZipFile(content['folderName']+'.rar', 'a')  # 创建压缩文件指针
+            zp = ZipFile(content['folderName'] + '.rar', 'a')  # 创建压缩文件指针
             Threads = list()
             for i in range(8):
                 t = threading.Thread(target=get_photo,
-                                     args=(zp, content['folderName'], ))
+                                     args=(zp, content['folderName'],))
                 t.start()
                 Threads.append(t)
             for t in Threads:
@@ -267,7 +281,7 @@ def main():
             # 释放压缩文件指针
             zp.close()
             # 读取资源文本
-            # zippay(downurl, content['folderName']+'.rar')
+            zippay(downurl, content['folderName'] + '.rar')
             # 上传百度云
             upload_Bdyun(content['folderName'])
             end = time.time()
